@@ -14,15 +14,16 @@ public class RegressionTester {
         String outputDirectory = "C:/Development/CRDTesting/ResponseJSONtoExcel/";
 
         // Directories for PROD and QA outputs
-        String prodOutputDirectory = "C:/Development/CRDTesting/Compare/SourceFiles/Archive/";
-        String qaOutputDirectory = outputDirectory; // QA files are generated here
+        String prodOutputDirectory = "C:/Development/CRDTesting/RegressionTestingOutput/PROD_CRDFiles"; // PROD files are generated here
+        String qaOutputDirectory = "C:/Development/CRDTesting/RegressionTestingOutput/QA_CRDFiles"; // QA files are generated here
 
         // Ensure necessary directories exist
         createDirectoryIfNotExists(outputDirectory);
         createDirectoryIfNotExists(prodOutputDirectory);
+        createDirectoryIfNotExists(qaOutputDirectory);
 
         // Clear previous files in output directories
-        clearDirectory(outputDirectory);
+        clearDirectory(qaOutputDirectory);
         clearDirectory(prodOutputDirectory);
 
         // Process JSON files against PROD API
@@ -36,10 +37,11 @@ public class RegressionTester {
         System.out.println("Processing JSON files against QA API...");
         aMainRun.runConversion(SFDCCaseNumber, "QA", RuleAppVersion, RuleSetVersion, TestingVersion, true, apiType);
 
-        // No need to move QA files; they are already in outputDirectory (qaOutputDirectory)
+        // Move PROD files to qaOutputDirectory
+        moveFilesByInstance(outputDirectory, prodOutputDirectory, "QA");
 
         // Compare the generated Excel files
-        String outputComparisonDirectory = "C:/Development/CRDTesting/Compare/ComparisonOutput/";
+        String outputComparisonDirectory = "C:/Development/CRDTesting/RegressionTestingOutput/ComparisonOutput/";
         createDirectoryIfNotExists(outputComparisonDirectory);
 
         try {

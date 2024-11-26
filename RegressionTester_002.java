@@ -7,45 +7,39 @@ import java.util.stream.Stream;
 public class RegressionTester {
 
     public static void performRegressionTesting(String SFDCCaseNumber, String RuleAppVersion, String RuleSetVersion, String TestingVersion, String apiType) {
-        // Input JSON directory
+        // Input JSON directory (as per existing code)
         String JSONRequestFolderPath = "C:/Development/CRDTesting/JSONRequestFilesFolder/";
 
-        // Output directory used by aMainRun (hardcoded in aMainRun)
+        // Output directory as per aMainRun (hardcoded in aMainRun)
         String outputDirectory = "C:/Development/CRDTesting/ResponseJSONtoExcel/";
 
         // Directories for PROD and QA outputs
-        String prodOutputDirectory = "C:/Development/CRDTesting/RegressionTestingOutput/PROD_CRDFiles";
-        String qaOutputDirectory = "C:/Development/CRDTesting/RegressionTestingOutput/QA_CRDFiles";
+        String prodOutputDirectory = "C:/Development/CRDTesting/Compare/SourceFiles/Archive/";
+        String qaOutputDirectory = outputDirectory; // QA files are generated here
 
         // Ensure necessary directories exist
         createDirectoryIfNotExists(outputDirectory);
         createDirectoryIfNotExists(prodOutputDirectory);
-        createDirectoryIfNotExists(qaOutputDirectory);
 
         // Clear previous files in output directories
         clearDirectory(outputDirectory);
         clearDirectory(prodOutputDirectory);
-        clearDirectory(qaOutputDirectory);
 
         // Process JSON files against PROD API
         System.out.println("Processing JSON files against PROD API...");
         aMainRun.runConversion(SFDCCaseNumber, "PROD", RuleAppVersion, RuleSetVersion, TestingVersion, true, apiType);
 
-        // Move all generated files to prodOutputDirectory
-        moveFiles(outputDirectory, prodOutputDirectory);
-
-        // Clear output directory before processing QA files
-        clearDirectory(outputDirectory);
+        // Move PROD files to prodOutputDirectory
+        moveFilesByInstance(outputDirectory, prodOutputDirectory, "PROD");
 
         // Process JSON files against QA API
         System.out.println("Processing JSON files against QA API...");
         aMainRun.runConversion(SFDCCaseNumber, "QA", RuleAppVersion, RuleSetVersion, TestingVersion, true, apiType);
 
-        // Move all generated files to qaOutputDirectory
-        moveFiles(outputDirectory, qaOutputDirectory);
+        // No need to move QA files; they are already in outputDirectory (qaOutputDirectory)
 
         // Compare the generated Excel files
-        String outputComparisonDirectory = "C:/Development/CRDTesting/RegressionTestingOutput/ComparisonOutput/";
+        String outputComparisonDirectory = "C:/Development/CRDTesting/Compare/ComparisonOutput/";
         createDirectoryIfNotExists(outputComparisonDirectory);
 
         try {
@@ -62,17 +56,18 @@ public class RegressionTester {
         }
     }
 
-    private static void moveFiles(String sourceDir, String targetDir) {
+    private static void moveFilesByInstance(String sourceDir, String targetDir, String instanceIdentifier) {
         try (Stream<Path> files = Files.list(Paths.get(sourceDir))) {
-            files.forEach(path -> {
-                try {
-                    Path targetPath = Paths.get(targetDir, path.getFileName().toString());
-                    Files.move(path, targetPath, StandardCopyOption.REPLACE_EXISTING);
-                    System.out.println("Moved file: " + path.getFileName().toString() + " to " + targetDir);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
+            files.filter(path -> path.getFileName().toString().contains("_" + instanceIdentifier + "_"))
+                 .forEach(path -> {
+                     try {
+                         Path targetPath = Paths.get(targetDir, path.getFileName().toString());
+                         Files.move(path, targetPath, StandardCopyOption.REPLACE_EXISTING);
+                         System.out.println("Moved file: " + path.getFileName().toString() + " to " + targetDir);
+                     } catch (IOException e) {
+                         e.printStackTrace();
+                     }
+                 });
         } catch (IOException e) {
             e.printStackTrace();
         }

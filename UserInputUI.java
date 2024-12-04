@@ -14,26 +14,27 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class UserInputUI {
-    private static ExecutorService executor;
-    private static Future<?> futureTask;
-    private static JLabel sourceFileCountLabel;
-    private static JLabel generatedFileCountLabel;
-    private static JLabel compareSourceFileCountLabel; // Label for source folder file count
-    private static JLabel compareGeneratedFileCountLabel; // Label for comparison output folder file count
-    private static int generatedFileCount;
-    private static int compareGeneratedFileCount;
+	private static ExecutorService executor;
+	private static Future<?> futureTask;
+	private static JLabel sourceFileCountLabel;
+	private static JLabel generatedFileCountLabel;
+	private static JLabel compareSourceFileCountLabel; // Label for source folder file count
+	private static JLabel compareGeneratedFileCountLabel; // Label for comparison output folder file count
+	private static int generatedFileCount;
+	private static int compareGeneratedFileCount;
 
-    // Variables to hold selected files
-    private static File selectedSourceFile = null;
-    private static File selectedGeneratedFile = null;
+	// Variables to hold selected files
+	private static File selectedSourceFile = null;
+	private static File selectedGeneratedFile = null;
 
-    public static void display() {
-        JFrame frame = new JFrame("Employer and Healthplan CRD Test Automation Tool - v1.0");
+	public static void display() {
+        JFrame frame = new JFrame("Employer and Healthplan CRD Test Automation Tool - v5.0");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new GridBagLayout());
         frame.setSize(1200, 700);
@@ -41,7 +42,7 @@ public class UserInputUI {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridwidth = 5; // Make title and description span multiple columns
+        gbc.gridwidth = 5; // Make title and description span two columns
 
         // Logo
         JLabel logoLabel = new JLabel(new ImageIcon("C:/Development/CRDTesting/Documents/CVSLogo.png"));
@@ -59,21 +60,25 @@ public class UserInputUI {
         titleLabel.setFont(new Font("Arial", Font.BOLD, 32));
         titleLabel.setForeground(Color.RED);
         gbc.gridy++;
+        gbc.gridwidth = 5;
         frame.add(titleLabel, gbc);
         
         // Version Title
-        JLabel versionLabel = new JLabel("Version 1.0", SwingConstants.CENTER);
+        JLabel versionLabel = new JLabel("Version 5.0", SwingConstants.CENTER);
         versionLabel.setFont(new Font("Arial", Font.BOLD, 18));
         versionLabel.setForeground(Color.BLACK);
         gbc.gridy++;
+        gbc.gridwidth = 5;
         frame.add(versionLabel, gbc);
 
         // Description
-        JLabel descriptionLabel1 = new JLabel("<html>This tool automates the conversion of JSON responses from an API to CRD files and compares Excel Files.<br>"
-                + "To use the compare-only option, the below fields are not required to configure.<br>" 
-                + "Weightage 10%</html>", SwingConstants.CENTER);
+        JLabel descriptionLabel1 = new JLabel("<html>The tool will run a JSON request file against a specified ODM environment to produce a JSON response and convert it into a Benefit Builder CRD.<br>"
+        		+ "The tool also has a compare function to compare pre/post ODM rule changes.<br>" 
+        		+ "<br>" 
+        		+ "All fields are mandatory for generating JSON Response or Benefit Builder CRD files only.</html>", SwingConstants.CENTER);
         descriptionLabel1.setFont(new Font("Arial", Font.PLAIN, 14));
         gbc.gridy++;
+        gbc.gridwidth = 5;
         frame.add(descriptionLabel1, gbc);
 
         // Empty lines
@@ -83,13 +88,14 @@ public class UserInputUI {
         // Reset grid width for input fields
         gbc.gridwidth = 1;
         
+        
         // First Row
         JLabel apiTypeLabel = new JLabel("LOB:");
         gbc.gridx = 0;
         gbc.gridy++;
         frame.add(apiTypeLabel, gbc);
 
-        String[] apiOptions = {"Employer", "Healthplan"};
+        String[] apiOptions = {"Employer", "Health Plan"};
         JComboBox<String> apiComboBox = new JComboBox<>(apiOptions);
         gbc.gridx = 1;
         frame.add(apiComboBox, gbc);
@@ -110,6 +116,7 @@ public class UserInputUI {
         sourceFileCountLabel = new JLabel("0");
         gbc.gridx = 5;
         frame.add(sourceFileCountLabel, gbc);
+        
         
         // Second Row       
         JLabel sfdcLabel = new JLabel("SFDC Case Number:");
@@ -137,6 +144,7 @@ public class UserInputUI {
         generatedFileCountLabel = new JLabel("0");
         gbc.gridx = 5;
         frame.add(generatedFileCountLabel, gbc);
+        
         
         // Third Row        
         JLabel envLabel = new JLabel("Environment:");
@@ -166,6 +174,7 @@ public class UserInputUI {
         gbc.gridx = 5;
         frame.add(compareSourceFileCountLabel, gbc);
         
+        
         // Fourth Row   
         JLabel ruleAppLabel = new JLabel("RuleApp Version:");
         gbc.gridx = 0;
@@ -192,6 +201,7 @@ public class UserInputUI {
         compareGeneratedFileCountLabel = new JLabel("0");
         gbc.gridx = 5;
         frame.add(compareGeneratedFileCountLabel, gbc);
+        
                 
         // Fifth Row
         JLabel ruleSetLabel = new JLabel("RuleSet Version:");
@@ -208,6 +218,7 @@ public class UserInputUI {
         gbc.gridx = 2;
         frame.add(ruleSetComment, gbc);
         
+        
         // Sixth Row
         JLabel testVerLabel = new JLabel("Testing Version:");
         gbc.gridx = 0;
@@ -223,29 +234,25 @@ public class UserInputUI {
         gbc.gridx = 2;
         frame.add(testVerComment, gbc);
         
-        // Buttons        
+        // Buttons  
+        
+        // Seventh Row
         JButton createRepoButton = new JButton("Create Repositories");
         gbc.gridx = 1;
         gbc.gridy++;
-        frame.add(createRepoButton, gbc);          
-
+        frame.add(createRepoButton, gbc);    
+        
+        // Eighth Row
         JButton runJsonButton = new JButton("Generate JSON Response Files");
         gbc.gridx = 1;
         gbc.gridy++;
         frame.add(runJsonButton, gbc);
 
         JButton runExcelButton = new JButton("Generate CRD Files");
-        gbc.gridx = 1;
-        gbc.gridy++;
+        gbc.gridx = 2;
         frame.add(runExcelButton, gbc);
-
-        // Add the Regression Testing Button
-        JButton regressionTestingButton = new JButton("Regression Testing");
-        gbc.gridx = 1;
-        gbc.gridy++;
-        frame.add(regressionTestingButton, gbc);
         
-        // Seventh Row
+        // Ninth Row
         JLabel selectFilesLabel = new JLabel("Select Files for Comparison: ");
         gbc.gridx = 0;
         gbc.gridy++;
@@ -259,7 +266,7 @@ public class UserInputUI {
         gbc.gridx = 2;
         frame.add(selectGeneratedFileButton, gbc);
         
-        // Eighth Row
+        // Tenth Row
         JLabel selectedSourceFileLabel = new JLabel("If no source files selected, tool will automatically pick files.");
         selectedSourceFileLabel.setForeground(Color.BLUE);
         gbc.gridx = 1;
@@ -271,6 +278,7 @@ public class UserInputUI {
         gbc.gridx = 2;
         frame.add(selectedGeneratedFileLabel, gbc);
         
+        // Eleventh Row
         JButton compareExcelButton = new JButton("Compare Excel Files");
         gbc.gridx = 1;
         gbc.gridy++;
@@ -280,11 +288,19 @@ public class UserInputUI {
         compareExcelComment.setForeground(Color.GRAY);
         gbc.gridx = 2;
         frame.add(compareExcelComment, gbc);
-
+        
+        // Twelth Row
+        JButton regressionTestingButton = new JButton("Regression Testing");
+        gbc.gridx = 1;
+        gbc.gridy++;
+        frame.add(regressionTestingButton, gbc);
+        
+        // Thirteenth Row
         JButton stopButton = new JButton("Stop Execution");
         gbc.gridx = 1;
         gbc.gridy++;
         frame.add(stopButton, gbc);      
+        
         
         // Console
         JTextArea console = new JTextArea(10, 80);
@@ -313,11 +329,13 @@ public class UserInputUI {
         
         // Action listener to clear the console when the button is clicked
         clearConsoleButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                console.setText("");
-            }
-        });
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+					console.setText("");
+				
+			}
+		});
         
         // Initial file count
         updateSourceFileCount();
@@ -417,7 +435,7 @@ public class UserInputUI {
             }
         });
         
-        // Action listeners for file selection buttons
+     // Action listeners for file selection buttons
         selectSourceFileButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -474,40 +492,43 @@ public class UserInputUI {
                         }
                     });
                 } else {
-                    // No specific files selected, proceed with default directory comparison
-                    String sourceDirPath = "C:/Development/CRDTesting/Compare/SourceFiles";
-                    String generatedDirPath = "C:/Development/CRDTesting/ResponseJSONtoExcel/";
-                    String outputDirPath = "C:/Development/CRDTesting/Compare/ComparisonOutput";
-                    
-                    compareGeneratedFileCount = 0; // Reset the count
-                    updateCompareGeneratedFileCount(); // Update the UI
-
-                    executor = Executors.newSingleThreadExecutor();
-                    futureTask = executor.submit(() -> {
-                        try {
-                            // Pass the callback implementation to log messages to the JTextArea
-                            ExcelFileComparator.ProgressCallback callback = new ExcelFileComparator.ProgressCallback() {
-                                @Override
-                                public void log(String message) {
-                                    SwingUtilities.invokeLater(() -> console.append(message + "\n"));
-                                }
-                            };
-
-                            ExcelFileComparator.compareExcelFiles(sourceDirPath, generatedDirPath, outputDirPath, callback);
-                            SwingUtilities.invokeLater(() -> console.append("Comparison completed. Output files created in: " + outputDirPath + "\n"));
-                        } catch (IOException ex) {
-                            SwingUtilities.invokeLater(() -> {
-                                console.append("Error during comparison: " + ex.getMessage() + "\n");
-                                ex.printStackTrace();
-                            });
-                        }
-                    });
-                }
+                	
+                	// No specific files selected, proceed with default directory comparison
+                	
+	                String sourceDirPath = "C:/Development/CRDTesting/Compare/SourceFiles";
+	                String generatedDirPath = "C:/Development/CRDTesting/ResponseJSONtoExcel/";
+	                String outputDirPath = "C:/Development/CRDTesting/Compare/ComparisonOutput";
+	                
+	                compareGeneratedFileCount = 0; // Reset the count
+	                updateCompareGeneratedFileCount(); // Update the UI
+	
+	                executor = Executors.newSingleThreadExecutor();
+	                futureTask = executor.submit(() -> {
+	                    try {
+	                        // Pass the callback implementation to log messages to the JTextArea
+	                        ExcelFileComparator.ProgressCallback callback = new ExcelFileComparator.ProgressCallback() {
+	                            @Override
+	                            public void log(String message) {
+	                                SwingUtilities.invokeLater(() -> console.append(message + "\n"));
+	                            }
+	                        };
+	
+	                        ExcelFileComparator.compareExcelFiles(sourceDirPath, generatedDirPath, outputDirPath, callback);
+	                        SwingUtilities.invokeLater(() -> console.append("Comparison completed. Output files created in: " + outputDirPath + "\n"));
+	                    } catch (IOException ex) {
+	                        SwingUtilities.invokeLater(() -> {
+	                            console.append("Error during comparison: " + ex.getMessage() + "\n");
+	                            ex.printStackTrace();
+	                        });
+	                    }
+	                });
+	            }
             }
         });
 
         stopButton.addActionListener(new ActionListener() {
-            @Override
+
+	@Override
             public void actionPerformed(ActionEvent e) {
                 if (futureTask != null && !futureTask.isDone()) {
                     aMainRun.cancelConversion(); // Signal to cancel the conversion
@@ -524,8 +545,8 @@ public class UserInputUI {
                 RepositoryManager.createRepositories();  // Call the method to create repositories
             }
         });
-
-        // Action Listener for the Regression Testing Button
+        
+     // Action Listener for the Regression Testing Button
         regressionTestingButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -571,43 +592,44 @@ public class UserInputUI {
         frame.setVisible(true);
     }
 
-    private static void updateSourceFileCount() {
-        try {
-            long fileCount = Files.list(Paths.get("C:/Development/CRDTesting/JSONRequestFilesFolder/"))
-                    .filter(path -> !Files.isDirectory(path))
-                    .filter(path -> !path.getFileName().toString().startsWith("~$")).count();
-            sourceFileCountLabel.setText(String.valueOf(fileCount));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+	private static void updateSourceFileCount() {
+		try {
+			long fileCount = Files.list(Paths.get("C:/Development/CRDTesting/JSONRequestFilesFolder/"))
+					.filter(path -> !Files.isDirectory(path))
+					.filter(path -> !path.getFileName().toString().startsWith("~$")).count();
+			sourceFileCountLabel.setText(String.valueOf(fileCount));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
-    public static void updateCompareSourceFileCount() {
-        try {
-            long fileCount = Files.list(Paths.get("C:/Development/CRDTesting/Compare/SourceFiles"))
-                    .filter(path -> !Files.isDirectory(path))
-                    .filter(path -> !path.getFileName().toString().startsWith("~$")).count();
-            compareSourceFileCountLabel.setText(String.valueOf(fileCount));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+	public static void updateCompareSourceFileCount() {
+		try {
+			long fileCount = Files.list(Paths.get("C:/Development/CRDTesting/Compare/SourceFiles"))
+					.filter(path -> !Files.isDirectory(path))
+					.filter(path -> !path.getFileName().toString().startsWith("~$")).count();
+			compareSourceFileCountLabel.setText(String.valueOf(fileCount));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
-    public static synchronized void incrementGeneratedFileCount() {
-        generatedFileCount++;
-        updateGeneratedFileCount();
-    }
+	public static synchronized void incrementGeneratedFileCount() {
+		generatedFileCount++;
+		updateGeneratedFileCount();
+	}
 
-    public static synchronized void incrementCompareGeneratedFileCount() {
-        compareGeneratedFileCount++;
-        updateCompareGeneratedFileCount();
-    }
+	public static synchronized void incrementCompareGeneratedFileCount() {
+		compareGeneratedFileCount++;
+		updateCompareGeneratedFileCount();
+	}
 
-    private static void updateGeneratedFileCount() {
-        SwingUtilities.invokeLater(() -> generatedFileCountLabel.setText(String.valueOf(generatedFileCount)));
-    }
+	private static void updateGeneratedFileCount() {
+		SwingUtilities.invokeLater(() -> generatedFileCountLabel.setText(String.valueOf(generatedFileCount)));
+	}
 
-    private static void updateCompareGeneratedFileCount() {
-        SwingUtilities.invokeLater(() -> compareGeneratedFileCountLabel.setText(String.valueOf(compareGeneratedFileCount)));
-    }
+	private static void updateCompareGeneratedFileCount() {
+		SwingUtilities.invokeLater(() -> compareGeneratedFileCountLabel.setText(String.valueOf(compareGeneratedFileCount)));
+	}
+
 }

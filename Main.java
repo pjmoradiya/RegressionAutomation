@@ -51,7 +51,7 @@ import javax.swing.JOptionPane;
  * If the JSON response contains the keys "otherPtntPayIPLst" and "ptntPayCrdLst", the Excel file will have two sheets named "otherPtntPayIPLst" and "ptntPayCrdLst".
  * Each sheet will have columns corresponding to the attributes of the JSON objects and rows containing their respective values.
 
- * @author 
+ * @author Z326059 (Paras Moradiya)
  *
  *
  */
@@ -73,13 +73,13 @@ public class aMainRun {
 	public static void runConversion(String SFDCCaseNumber, String InstanceToExecute, String RuleAppVersion, String RuleSetVersion, String TestingVersion, boolean generateExcel, String apiType) {
 
 		// DO NOT MODIFY NEXT FIVE STRINGS
-    	String DEV = "https://dsr.odm.apps.dev.p.aetna.com/";				// DEV Endpoint
-    	String QA = "https://dsr.odm.str.apps.test.p.aetna.com/";			// QA Endpoint
-    	String PROD = "https://dsr.cvs.odm.apps.prod.p.aetna.com/";			// PROD Endpoint
-    	String EmpCRA = "DecisionService/rest/v1/RuleApp/";	// Employer RuleApp
-    	String EmpCRS = "Rules/";								// Employer RuleSet
-        String HPCRA = "DecisionService/rest/v1/RuleApp/"; 	// Health Plan RuleApp
-        String HPCRS = "Rule/"; 							// Health Plan RuleSet
+    	String DEV = "https://dsr.odm.apps.dev.cloudpak-aznp.aetna.com/";				// DEV Endpoint
+    	String QA = "https://dsr.odm.str.apps.test.cloudpak-aznp.aetna.com/";			// QA Endpoint
+    	String PROD = "https://dsr.cvs.odm.apps.prod.cloudpak-azp.aetna.com/";			// PROD Endpoint
+    	String EmpCRA = "DecisionService/rest/v1/CVSEmployerBenefitBuilderRuleApp/";	// Employer RuleApp
+    	String EmpCRS = "CVSEmployerBenefitBuilderRules/";								// Employer RuleSet
+        String HPCRA = "DecisionService/rest/v1/CVSBenefitBuilderHealthPlansRuleApp/"; 	// Health Plan RuleApp
+        String HPCRS = "CVSBenefitBuilderHealthPlansRule/"; 							// Health Plan RuleSet
 
     	String JSONRequestFolderPath = "C:/Development/CRDTesting/JSONRequestFilesFolder/";
 

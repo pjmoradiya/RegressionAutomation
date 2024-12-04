@@ -4,6 +4,7 @@ import org.apache.poi.openxml4j.exceptions.NotOfficeXmlFileException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.commons.text.similarity.JaroWinklerSimilarity;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -19,10 +20,10 @@ public class ExcelFileComparator {
         void log(String message);
     }
 
-    // Define a map for tab-specific key columns
+    // Define a map for tab-specific key columns (ensure zero-based indexing)
     private static final Map<String, List<Integer>> tabKeyColumnsMap = new HashMap<>();
     static {
-        tabKeyColumnsMap.put("Accum Override Copay", Arrays.asList(1, 3, 7));
+        tabKeyColumnsMap.put("Accum Override Copay", Arrays.asList(1, 3, 7)); // Adjust indices if needed
         tabKeyColumnsMap.put("Program", Arrays.asList(1, 2));
         tabKeyColumnsMap.put("drugCvrgIPLst - Program", Arrays.asList(1, 2));
         tabKeyColumnsMap.put("Other Patient Pay", Arrays.asList(1, 2));
@@ -37,7 +38,76 @@ public class ExcelFileComparator {
         // Add additional mappings as needed
     }
 
-    private static final double SIMILARITY_THRESHOLD = 0.7; // Adjust as needed
+    private static final List<Integer> defaultKeyColumns = Arrays.asList(1); // Default key column index 1
+
+    private static final double SIMILARITY_THRESHOLD = 0.5; // Adjusted as needed
+
+    // Sheet name mapping (from old names to new names)
+    private static final Map<String, String> sheetNameMapping = new HashMap<>();
+    static {
+        // Add mapping entries: sheetNameMapping.put("OldName", "NewName");
+        // You need to fill in the actual mapping based on your requirements
+
+        // Example mapping (replace with your actual mapping)
+        sheetNameMapping.put("Cover", "Cover");
+        sheetNameMapping.put("Accum ICL & MedD OOP", "Accum ICL&MedD - accumIclOopLst");
+        sheetNameMapping.put("Accum Override Copay", "AccumOv - accumOverrideCopayLst");
+        sheetNameMapping.put("Accum HRA - acmltnHraIPLst", "Accum HRA - acmltnHraIPLst");
+        sheetNameMapping.put("Addl Refill Fill Limits", "AddlRefil - addlRefillLimitsLst");
+        sheetNameMapping.put("Alternate Plan", "Alternate Plan - altPlanIPLst");
+        sheetNameMapping.put("Base Coverage", "Base Coverage - baseCoverage");
+        sheetNameMapping.put("Base Coverage", "Base Coverage - basePlanIPLst");
+        sheetNameMapping.put("BrandGeneric", "BrandGeneric - brandGenericLst");
+        sheetNameMapping.put("CDH", "CDH - CdhIP");
+        sheetNameMapping.put("CDH", "CDH - cdhIPLst");
+        sheetNameMapping.put("CDH SBOR", "CDH SBOR - cdhSborIPLst");
+        sheetNameMapping.put("CLC Details", "CLCDetail - clcDtlLst");
+        sheetNameMapping.put("CLC Details", "CLCDetail - clcnonStandardIPLst");
+        sheetNameMapping.put("Client Plan", "Client Plan - cltPlanIPLst");
+        sheetNameMapping.put("Compound", "Compound - cmpndIPLst");
+        sheetNameMapping.put("Compound Dosage Form", "CmpndDs - compoundDosageFormLst");
+        sheetNameMapping.put("Compound - History Control", "Cmpnd - compoundHistoryCntrlLst");
+        sheetNameMapping.put("Copay", "Copay - copayIPLst");
+        sheetNameMapping.put("Copay Modifier", "CopayModif - copayModifierIPLst");
+        sheetNameMapping.put("Cumulative Refill", "CumlativR - cumulativeRefillLst");
+        sheetNameMapping.put("Custom DUR", "Custom DUR - customDurLst");
+        sheetNameMapping.put("Custom Message", "Custom Message - customMsgLst");
+        sheetNameMapping.put("Default DAW Options", "DefaultDAWOpt - dawPnltyIPLst");
+        sheetNameMapping.put("DEA Class", "DEA Class - deaClassLst");
+        sheetNameMapping.put("Accum Deductible", "Accum Ded - dedtblIPCardLst");
+        sheetNameMapping.put("DESI Indicator", "DESI Indicator - desiDrugsLst");
+        sheetNameMapping.put("Program", "Program - drugCvrgIPLst");
+        sheetNameMapping.put("Formulary", "Formulary - frmlyIPLst");
+        sheetNameMapping.put("Accum Benefit Max", "Accum Benefit Max - mabIPCrdLst");
+        sheetNameMapping.put("Maintenance Edit", "Maint Edit - maintenanceEditLst");
+        sheetNameMapping.put("Maintenance Program", "Maint Program - maintPgmIPLst");
+        sheetNameMapping.put("Max Days Supply", "MxDySu - maximumDaysSupplyIPLst");
+        sheetNameMapping.put("Member Specific Pat Pay", "MbrSpPatPy - mbrSpecificPPIPLst");
+        sheetNameMapping.put("Additional Member Eligibility", "AddMe - memberEligibilityAddLst");
+        sheetNameMapping.put("Member Eligibility COB Details", "MECOB - memberEligibilityCobLst");
+        sheetNameMapping.put("Member Eligibility", "MbrElig - memberEligibilityLst");
+        sheetNameMapping.put("Max Days Supply", "Max Days Supply - mxdyIPLst");
+        sheetNameMapping.put("MaxDays Price Override", "MxDy PriceOvrd - mxDyPriceOrLst");
+        sheetNameMapping.put("NPI", "NPI - npiLst");
+        sheetNameMapping.put("Accum Out of Pocket & TROOP", "Accum OOP & TROOP - oopIPCrdLst");
+        sheetNameMapping.put("Other Patient Pay", "Other PP - otherPtntPayIPLst");
+        sheetNameMapping.put("PrescriberNetworkDetail", "PN- prescriberNetworkDetailLst");
+        sheetNameMapping.put("PrescriberNetworkDetail", "Pre - prescriberPharmacistIPLst");
+        sheetNameMapping.put("PSC Step Penalty", "PSC Step - pscStepPenaltyLst");
+        sheetNameMapping.put("Default Patient Pay", "Default PP - ptntPayCrdLst");
+        sheetNameMapping.put("Copay Modifier", "CpyMod - ptntPayModifierCrdLst");
+        sheetNameMapping.put("Refill Limits", "Refill Limits - refilLmtIPLst");
+        sheetNameMapping.put("Refill-Fill Limits", "Refil-FilLmts - rflFillLimitLst");
+        sheetNameMapping.put("ROA", "ROA - roaLst");
+        sheetNameMapping.put("Rx OTC", "Rx OTC - rxOtcLst");
+        sheetNameMapping.put("SRX Profile", "SRX Profile - srxPrflIPLst");
+        sheetNameMapping.put("TF Profile Attachment", "TFPrfileA - TfProfileAttachment");
+        sheetNameMapping.put("Third Party Exceptions", "TPE - thirdPartyExcptionLst");
+        sheetNameMapping.put("Third Party Exceptions", "TPE - tpeLst");
+        sheetNameMapping.put("User Message", "User Message - userMessageLst");
+        sheetNameMapping.put("XREF Profile Fast Pass", "XREFProfileFP - xrefFastPassLst");
+        // ... add more mappings as needed
+    }
 
     public static void compareExcelFiles(String sourceDirPath, String generatedDirPath, String outputDirPath,
                                          ProgressCallback callback) throws IOException {
@@ -105,20 +175,18 @@ public class ExcelFileComparator {
             callback.log("All tasks completed.");
             executor.shutdown();
         });
+
+        // Wait for all tasks to complete
+        try {
+            allOf.get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
     }
 
-    public static void compareSpecificFiles(File sourceFile, File generatedFile, String outputDirPath,
-                                            ProgressCallback callback) throws IOException {
-        Path outputDir = Paths.get(outputDirPath);
-        if (!Files.exists(outputDir)) {
-            Files.createDirectories(outputDir);
-            callback.log("Comparison Output Path Created at: " + outputDirPath);
-        }
-
-        String generatedFileName = generatedFile.getName();
-        String outputFilePath = Paths.get(outputDirPath, "Compared_" + generatedFileName).toString();
-
-        callback.log("Starting comparison for: " + generatedFileName);
+    private static void compareAndHighlightDifferences(File sourceFile, File generatedFile, String outputFilePath,
+                                                       ProgressCallback callback) throws IOException {
+        callback.log("Starting comparison for: " + generatedFile.getName());
         try (FileInputStream sourceFis = new FileInputStream(sourceFile);
              FileInputStream generatedFis = new FileInputStream(generatedFile);
              Workbook sourceWorkbook = new XSSFWorkbook(sourceFis);
@@ -126,35 +194,41 @@ public class ExcelFileComparator {
 
             callback.log("Opened workbooks for comparison.");
 
-            // Remove the preprocessing calls to avoid exceptions during manual comparison
-            // ExcelFilePreprocessor.preprocessWorkbook(sourceWorkbook);
-            // ExcelFilePreprocessor.preprocessWorkbook(generatedWorkbook);
+            // Rename sheets based on mapping
+            renameSheets(sourceWorkbook);
+            renameSheets(generatedWorkbook);
+
+            // Read sheet name mappings
+            Map<String, String> sheetNameMap = getSheetNameMap(sourceWorkbook, generatedWorkbook);
 
             List<String> summaryList = new ArrayList<>();
             CellStyle partialMismatchStyle = createCellStyle(generatedWorkbook, IndexedColors.LIGHT_ORANGE);
             CellStyle missingGeneratedStyle = createCellStyle(generatedWorkbook, IndexedColors.YELLOW);
             CellStyle missingSourceStyle = createCellStyle(generatedWorkbook, IndexedColors.LIGHT_GREEN);
 
-            // Comparison logic remains the same as in compareAndHighlightDifferences method
+            // Get list of sheets to compare based on mappings
+            Set<String> sheetNamesToCompare = sheetNameMap.keySet();
 
-            for (int sheetIndex = 0; sheetIndex < generatedWorkbook.getNumberOfSheets(); sheetIndex++) {
-                Sheet outputSheet = generatedWorkbook.getSheetAt(sheetIndex);
-                String sheetName = outputSheet.getSheetName();
-                Sheet sourceSheet = sourceWorkbook.getSheet(sheetName);
+            for (String sheetName : sheetNamesToCompare) {
+                String sourceSheetName = sheetName;
+                String generatedSheetName = sheetNameMap.get(sheetName);
+
+                Sheet sourceSheet = sourceWorkbook.getSheet(sourceSheetName);
+                Sheet generatedSheet = generatedWorkbook.getSheet(generatedSheetName);
 
                 callback.log("Comparing sheet: " + sheetName);
 
-                if (sourceSheet == null || outputSheet == null) {
+                if (sourceSheet == null || generatedSheet == null) {
                     callback.log("One of the sheets is null, skipping comparison for this sheet.");
                     continue;
                 }
 
                 // Get key columns for the current sheet
-                List<Integer> keyColumns = tabKeyColumnsMap.get(sheetName);
+                List<Integer> keyColumns = getKeyColumnsForSheet(sheetName);
 
                 // Collect all source and generated rows
                 List<RowData> sourceRows = getAllRowData(sourceSheet, keyColumns);
-                List<RowData> generatedRows = getAllRowData(outputSheet, keyColumns);
+                List<RowData> generatedRows = getAllRowData(generatedSheet, keyColumns);
 
                 // Build maps for fast lookup, mapping keys to lists of RowData
                 Map<String, List<RowData>> sourceRowMap = groupRowsByKey(sourceRows);
@@ -170,7 +244,7 @@ public class ExcelFileComparator {
                     List<RowData> generatedRowList = generatedRowMap.getOrDefault(key, new ArrayList<>());
 
                     // Now, match rows in sourceRowList and generatedRowList
-                    matchAndCompareRows(sourceRowList, generatedRowList, outputSheet, partialMismatchStyle,
+                    matchAndCompareRows(sourceRowList, generatedRowList, generatedSheet, partialMismatchStyle,
                             missingGeneratedStyle, missingSourceStyle, summaryList, callback, sheetName);
                 }
             }
@@ -181,11 +255,27 @@ public class ExcelFileComparator {
             try (FileOutputStream fos = new FileOutputStream(outputFilePath)) {
                 generatedWorkbook.write(fos);
             }
-            callback.log("Written output workbook for: " + generatedFileName);
+            callback.log("Written output workbook for: " + generatedFile.getName());
 
         } catch (Exception e) {
-            callback.log("Exception during comparison for file: " + generatedFileName + " - " + e.getMessage());
+            callback.log("Exception during comparison for file: " + generatedFile.getName() + " - " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    public static void compareSpecificFiles(File sourceFile, File generatedFile, String outputDirPath,
+                                            ProgressCallback callback) throws IOException {
+        compareAndHighlightDifferences(sourceFile, generatedFile,
+                Paths.get(outputDirPath, "Compared_" + generatedFile.getName()).toString(), callback);
+    }
+
+    // Rename sheets based on the mapping (from ExcelFilePreprocessor)
+    private static void renameSheets(Workbook workbook) {
+        // Iterate over sheets and rename them
+        for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+            String oldName = workbook.getSheetName(i);
+            String newName = sheetNameMapping.getOrDefault(oldName, oldName);
+            workbook.setSheetName(i, newName);
         }
     }
 
@@ -210,71 +300,35 @@ public class ExcelFileComparator {
         return null;
     }
 
-    private static void compareAndHighlightDifferences(File sourceFile, File generatedFile, String outputFilePath,
-                                                       ProgressCallback callback) throws IOException {
-        callback.log("Starting comparison for: " + generatedFile.getName());
-        try (FileInputStream sourceFis = new FileInputStream(sourceFile);
-             FileInputStream generatedFis = new FileInputStream(generatedFile);
-             Workbook sourceWorkbook = new XSSFWorkbook(sourceFis);
-             Workbook generatedWorkbook = new XSSFWorkbook(generatedFis)) {
+    private static Map<String, String> getSheetNameMap(Workbook sourceWorkbook, Workbook generatedWorkbook) {
+        Map<String, String> sheetNameMap = new HashMap<>();
 
-            callback.log("Opened workbooks for comparison.");
-
-            List<String> summaryList = new ArrayList<>();
-            CellStyle partialMismatchStyle = createCellStyle(generatedWorkbook, IndexedColors.LIGHT_ORANGE);
-            CellStyle missingGeneratedStyle = createCellStyle(generatedWorkbook, IndexedColors.YELLOW);
-            CellStyle missingSourceStyle = createCellStyle(generatedWorkbook, IndexedColors.LIGHT_GREEN);
-
-            for (int sheetIndex = 0; sheetIndex < generatedWorkbook.getNumberOfSheets(); sheetIndex++) {
-                Sheet outputSheet = generatedWorkbook.getSheetAt(sheetIndex);
-                String sheetName = outputSheet.getSheetName();
-                Sheet sourceSheet = sourceWorkbook.getSheet(sheetName);
-
-                callback.log("Comparing sheet: " + sheetName);
-
-                if (sourceSheet == null || outputSheet == null) {
-                    callback.log("One of the sheets is null, skipping comparison for this sheet.");
-                    continue;
-                }
-
-                // Get key columns for the current sheet
-                List<Integer> keyColumns = tabKeyColumnsMap.get(sheetName);
-
-                // Collect all source and generated rows
-                List<RowData> sourceRows = getAllRowData(sourceSheet, keyColumns);
-                List<RowData> generatedRows = getAllRowData(outputSheet, keyColumns);
-
-                // Build maps for fast lookup, mapping keys to lists of RowData
-                Map<String, List<RowData>> sourceRowMap = groupRowsByKey(sourceRows);
-                Map<String, List<RowData>> generatedRowMap = groupRowsByKey(generatedRows);
-
-                // Match and compare rows
-                Set<String> allKeys = new HashSet<>();
-                allKeys.addAll(sourceRowMap.keySet());
-                allKeys.addAll(generatedRowMap.keySet());
-
-                for (String key : allKeys) {
-                    List<RowData> sourceRowList = sourceRowMap.getOrDefault(key, new ArrayList<>());
-                    List<RowData> generatedRowList = generatedRowMap.getOrDefault(key, new ArrayList<>());
-
-                    // Now, match rows in sourceRowList and generatedRowList
-                    matchAndCompareRows(sourceRowList, generatedRowList, outputSheet, partialMismatchStyle,
-                            missingGeneratedStyle, missingSourceStyle, summaryList, callback, sheetName);
-                }
-            }
-
-            createSummarySheet(generatedWorkbook, summaryList);
-
-            // Write the output workbook
-            try (FileOutputStream fos = new FileOutputStream(outputFilePath)) {
-                generatedWorkbook.write(fos);
-            }
-            callback.log("Written output workbook for: " + generatedFile.getName());
-
-        } catch (Exception e) {
-            callback.log("Exception during comparison for file: " + generatedFile.getName() + " - " + e.getMessage());
-            e.printStackTrace();
+        // Build a set of source sheet names
+        Set<String> sourceSheetNames = new HashSet<>();
+        for (int i = 0; i < sourceWorkbook.getNumberOfSheets(); i++) {
+            sourceSheetNames.add(sourceWorkbook.getSheetName(i));
         }
+
+        // For each sheet in the generated workbook
+        for (int i = 0; i < generatedWorkbook.getNumberOfSheets(); i++) {
+            String generatedSheetName = generatedWorkbook.getSheetName(i);
+            String mappedSheetName = sheetNameMapping.getOrDefault(generatedSheetName, generatedSheetName);
+
+            if (sourceSheetNames.contains(mappedSheetName)) {
+                // If the mapped sheet name exists in source, add to the map
+                sheetNameMap.put(mappedSheetName, generatedSheetName);
+            } else if (sourceSheetNames.contains(generatedSheetName)) {
+                // If the sheet names match exactly, add to the map
+                sheetNameMap.put(generatedSheetName, generatedSheetName);
+            }
+            // Else, do not add to the map (sheet will not be compared)
+        }
+
+        return sheetNameMap;
+    }
+
+    private static List<Integer> getKeyColumnsForSheet(String sheetName) {
+        return tabKeyColumnsMap.getOrDefault(sheetName, defaultKeyColumns);
     }
 
     // Group rows by key, mapping keys to lists of RowData to handle duplicate keys
@@ -319,8 +373,8 @@ public class ExcelFileComparator {
                 matchedGeneratedRows.add(bestMatch);
 
                 // Compare the matched rows
-                compareRows(sourceRowData.getRow(), bestMatch.getRow(), partialMismatchStyle, summaryList, callback,
-                        sheetName);
+                compareRows(sourceRowData.getRow(), bestMatch.getRow(), partialMismatchStyle,
+                        summaryList, callback, sheetName);
             }
         }
 
@@ -349,12 +403,30 @@ public class ExcelFileComparator {
         }
     }
 
-    // Update getAllRowData method to accept keyColumns
+    // getAllRowData method remains unchanged
     private static List<RowData> getAllRowData(Sheet sheet, List<Integer> keyColumns) {
         List<RowData> rowDataList = new ArrayList<>();
-        for (int rowNum = sheet.getFirstRowNum() + 1; rowNum <= sheet.getLastRowNum(); rowNum++) {
+        boolean startCollecting = false;
+
+        for (int rowNum = sheet.getFirstRowNum(); rowNum <= sheet.getLastRowNum(); rowNum++) {
             Row row = sheet.getRow(rowNum);
-            if (row != null && !isRowEmpty(row)) {
+            if (row == null) {
+                continue;
+            }
+
+            Cell firstCell = row.getCell(0);
+            String firstCellValue = getCellValue(firstCell).trim();
+
+            if (!startCollecting) {
+                if (firstCellValue.equalsIgnoreCase("Client Code")) {
+                    startCollecting = true;
+                    continue; // Skip the header row
+                } else {
+                    continue; // Skip until we find "Client Code"
+                }
+            }
+
+            if (!isRowEmpty(row)) {
                 RowData rowData = new RowData(row, keyColumns);
                 rowDataList.add(rowData);
             }
@@ -368,7 +440,7 @@ public class ExcelFileComparator {
         private List<String> cellValues;
         private String key; // Key based on key columns
 
-        // Update constructor to accept keyColumns
+        // Updated constructor to accept keyColumns and added debug logging
         public RowData(Row row, List<Integer> keyColumns) {
             this.row = row;
             this.cellValues = new ArrayList<>();
@@ -388,6 +460,8 @@ public class ExcelFileComparator {
 
             if (keyColumns != null) {
                 this.key = keyBuilder.toString();
+                // Debug log
+                System.out.println("Generated key for sheet '" + row.getSheet().getSheetName() + "' at row " + (row.getRowNum() + 1) + ": " + this.key);
             } else {
                 this.key = null;
             }
@@ -443,7 +517,7 @@ public class ExcelFileComparator {
             String sourceValue = i < sourceValues.size() ? sourceValues.get(i) : "";
             String generatedValue = i < generatedValues.size() ? generatedValues.get(i) : "";
 
-            if (sourceValue.equalsIgnoreCase(generatedValue)) {
+            if (areValuesSimilar(sourceValue, generatedValue)) {
                 matchingCells++;
             }
         }
@@ -465,7 +539,7 @@ public class ExcelFileComparator {
             String sourceValue = getCellValue(sourceCell).trim();
             String generatedValue = getCellValue(generatedCell).trim();
 
-            if (!sourceValue.equalsIgnoreCase(generatedValue)) {
+            if (!areValuesSimilar(sourceValue, generatedValue)) {
                 if (generatedCell == null) {
                     generatedCell = generatedRow.createCell(cellNum);
                 }
@@ -478,6 +552,38 @@ public class ExcelFileComparator {
                         + ", Column: " + (cellNum + 1));
             }
         }
+    }
+
+    private static boolean areValuesSimilar(String value1, String value2) {
+        // Handle nulls
+        if (value1 == null || value2 == null) {
+            return value1 == value2; // True if both are null
+        }
+
+        // Trim and ignore case
+        value1 = value1.trim();
+        value2 = value2.trim();
+
+        // Exact match
+        if (value1.equalsIgnoreCase(value2)) {
+            return true;
+        }
+
+        // Numeric comparison with tolerance
+        try {
+            double num1 = Double.parseDouble(value1);
+            double num2 = Double.parseDouble(value2);
+            double tolerance = 0.0001;
+            return Math.abs(num1 - num2) < tolerance;
+        } catch (NumberFormatException e) {
+            // Not numeric, continue
+        }
+
+        // String similarity
+        JaroWinklerSimilarity similarity = new JaroWinklerSimilarity();
+        double score = similarity.apply(value1.toLowerCase(), value2.toLowerCase());
+
+        return score >= 0.85; // Adjust threshold as needed
     }
 
     private static String getCellValue(Cell cell) {
@@ -620,6 +726,9 @@ public class ExcelFileComparator {
         }
         // Move Summary Tab to beginning
         workbook.setSheetOrder(summarySheet.getSheetName(), 0);
+        
+        // Summary Tab Formatting
+        summarySheet.autoSizeColumn(0);
     }
 
     public static void main(String[] args) {

@@ -13,49 +13,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import javax.swing.JOptionPane;
 
-/**
- * This Java program is developed for Employer CRD Testing.
- * This program automates the conversion of JSON responses from an API to an Excel file.
- * It streamlines the testing process, significantly reducing the time required.
- *
- * Program Features:
- * - Specify the path of the request JSON file stored on your computer.
- * - Choose the environment for executing the request: DEV, QA, or PROD.
- * - Define the RuleApp and RuleSet version for the execution.
- * - The path of the file going to be saved at C:/Development/CRDTesting/ResponseJSONtoExcel/ path.
- * - You are not required to create the directory, this program will take care of creating the directory. 
- * - The excel file name will be as follows...
- * 			SFDC Case Number
- * 			Environment is being executed against
- * 			CRD
- * 			Name of the JSON Request File
- * 			Date of code execution
- * 			Version specified
- * 			Ex: 0000000 QA CRD - SPEC1 - 6-27-2024 - 06292024 - v101.xlsx
- *
- * Usage:
- * - Ensure the JSON request file is correctly specified.
- * - Configure the desired environment, RuleApp, RuleSet version, and output file path.
- * - Run this Java program.
- *
- * Performance:
- * - The program typically processes an average-sized request within 5-10 seconds.
- *
- * Excel File Structure:
- * - Each key in the JSON response's "benefitResponse" object will be represented as a separate sheet in the Excel file.
- * - Each sheet will contain:
- *   - A header row with column names derived from the JSON keys.
- *   - Subsequent rows representing the values for each JSON object in the array.
- *
- * Example:
- * If the JSON response contains the keys "otherPtntPayIPLst" and "ptntPayCrdLst", the Excel file will have two sheets named "otherPtntPayIPLst" and "ptntPayCrdLst".
- * Each sheet will have columns corresponding to the attributes of the JSON objects and rows containing their respective values.
-
- * @author Z326059 (Paras Moradiya)
- *
- *
- */
-
 public class aMainRun {
 	
 	private static volatile boolean stopRequested = false;
@@ -73,13 +30,13 @@ public class aMainRun {
 	public static void runConversion(String SFDCCaseNumber, String InstanceToExecute, String RuleAppVersion, String RuleSetVersion, String TestingVersion, boolean generateExcel, String apiType) {
 
 		// DO NOT MODIFY NEXT FIVE STRINGS
-    	String DEV = "https://dsr.odm.apps.dev.cloudpak-aznp.aetna.com/";				// DEV Endpoint
-    	String QA = "https://dsr.odm.str.apps.test.cloudpak-aznp.aetna.com/";			// QA Endpoint
-    	String PROD = "https://dsr.cvs.odm.apps.prod.cloudpak-azp.aetna.com/";			// PROD Endpoint
-    	String EmpCRA = "DecisionService/rest/v1/CVSEmployerBenefitBuilderRuleApp/";	// Employer RuleApp
-    	String EmpCRS = "CVSEmployerBenefitBuilderRules/";								// Employer RuleSet
-        String HPCRA = "DecisionService/rest/v1/CVSBenefitBuilderHealthPlansRuleApp/"; 	// Health Plan RuleApp
-        String HPCRS = "CVSBenefitBuilderHealthPlansRule/"; 							// Health Plan RuleSet
+    	String DEV = "https://dev.cloudpack.com/";				// DEV Endpoint
+    	String QA = "https://str.apps.test.cloudpak.com/";			// QA Endpoint
+    	String PROD = "https://prod.cloudpak.com/";			// PROD Endpoint
+    	String EmpCRA = "DecisionService/rest/v1/BuilderRuleApp/";	// Employer RuleApp
+    	String EmpCRS = "BuilderRules/";								// Employer RuleSet
+        String HPCRA = "DecisionService/rest/v1/HealthPlansRuleApp/"; 	// Health Plan RuleApp
+        String HPCRS = "HealthPlansRule/"; 							// Health Plan RuleSet
 
     	String JSONRequestFolderPath = "C:/Development/CRDTesting/JSONRequestFilesFolder/";
 

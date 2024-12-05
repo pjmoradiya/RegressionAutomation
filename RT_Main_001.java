@@ -28,13 +28,14 @@ public class aMainRun {
                                      String apiType) {
         // Default output directory
         String outputDirectory = "C:/Development/CRDTesting/ResponseJSONtoExcel/";
-        runConversion(SFDCCaseNumber, InstanceToExecute, RuleAppVersion, RuleSetVersion, TestingVersion,
-                      generateExcel, apiType, outputDirectory);
+        runConversionWithOutputDirectory(SFDCCaseNumber, InstanceToExecute, RuleAppVersion, RuleSetVersion,
+                                         TestingVersion, generateExcel, apiType, outputDirectory);
     }
 
-    public static void runConversion(String SFDCCaseNumber, String InstanceToExecute, String RuleAppVersion,
-                                     String RuleSetVersion, String TestingVersion, boolean generateExcel,
-                                     String apiType, String outputDirectory) {
+    // New method with a different name to avoid conflicts
+    public static void runConversionWithOutputDirectory(String SFDCCaseNumber, String InstanceToExecute, String RuleAppVersion,
+                                                        String RuleSetVersion, String TestingVersion, boolean generateExcel,
+                                                        String apiType, String outputDirectory) {
 
         // DO NOT MODIFY NEXT FIVE STRINGS
         String DEV = "https://dev.cloudpack.com/";              // DEV Endpoint

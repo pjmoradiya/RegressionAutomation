@@ -33,7 +33,7 @@ public class UserInputUI {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridwidth = 5; // Make title and description span two columns
 
-        // [Existing UI code remains unchanged]
+        // [Your existing UI code remains unchanged]
 
         // Action Listener for the Regression Testing Button
         regressionTestingButton.addActionListener(new ActionListener() {

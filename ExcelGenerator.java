@@ -21,7 +21,7 @@ public class ExcelGenerator {
         processJsonObject(workbook, benefitResponse, "cltPlanIPLst", new odm_ClientPlan_cltPlanIP(clientCode, planId), benefitResponse);								// Order #1
         processJsonObject(workbook, benefitResponse, "mabIPCrdLst", new odm_AccumBenefitMax_mabIPCrdLst(clientCode, planId), benefitResponse);							// Order #2
         processJsonObject(workbook, benefitResponse, "dedtblIPCardLst", new odm_AccumDed_dedtblIPCardLst(clientCode, planId), benefitResponse);							// Order #3
-
+        processJsonObject(workbook, benefitResponse, "acmltnHraIPLst", new odm_AccumHRA_acmltnHraIPLst(clientCode, planId), benefitResponse);							// Order #4 
         // Process undefined objects/collections
         Iterator<String> keys = benefitResponse.keys();
         while (keys.hasNext()) {
@@ -43,9 +43,9 @@ public class ExcelGenerator {
 
     private static void processJsonObject(Workbook workbook, JSONObject benefitResponse, String key, JsonProcessor processor, JSONObject jsonResponse) {
         JSONArray jsonArray = benefitResponse.optJSONArray(key);
-        if (jsonArray != null) {
+//        if (jsonArray != null || jsonArray == null) {
             processor.process(workbook, key, jsonArray, jsonResponse);
-        }
+//        }
     }
 
     private static boolean isDefinedObject(String key) {
@@ -83,6 +83,11 @@ public class ExcelGenerator {
                     cell.setCellValue(item.optString(key, ""));
                 }
             }
+        } else {
+        	// No data present, but still create the sheet with headers
+            // Here we just create one header cell "No Data"
+            Row headerRow = sheet.createRow(0);
+            Cell cell = headerRow.createCell(0);
         }
     }
 }

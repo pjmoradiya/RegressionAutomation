@@ -47,8 +47,6 @@ import javax.swing.JOptionPane;
  * "otherPtntPayIPLst" and "ptntPayCrdLst". Each sheet will have columns
  * corresponding to the attributes of the JSON objects and rows containing their
  * respective values.
- * 
- * @author Z326059 (Paras Moradiya)
  *
  *
  */

@@ -19,9 +19,8 @@ public class ExcelGenerator {
         // Process each object in the benefitResponse
         
         processJsonObject(workbook, benefitResponse, "cltPlanIPLst", new odm_ClientPlan_cltPlanIP(clientCode, planId), benefitResponse);								// Order #1
-        processJsonObject(workbook, benefitResponse, "mabIPCrdLst", new odm_AccumBenefitMax_mabIPCrdLst(clientCode, planId), benefitResponse);							// Order #2
-        processJsonObject(workbook, benefitResponse, "dedtblIPCardLst", new odm_AccumDed_dedtblIPCardLst(clientCode, planId), benefitResponse);							// Order #3
-        processJsonObject(workbook, benefitResponse, "acmltnHraIPLst", new odm_AccumHRA_acmltnHraIPLst(clientCode, planId), benefitResponse);							// Order #4 
+        processJsonObject(workbook, benefitResponse, "mabIPCrdLst", new odm_AccumBenefitMax_mabIPCrdLst(clientCode, planId), benefitResponse);							// Order #2 
+
         // Process undefined objects/collections
         Iterator<String> keys = benefitResponse.keys();
         while (keys.hasNext()) {
@@ -41,17 +40,23 @@ public class ExcelGenerator {
         workbook.close();
     }
 
-    private static void processJsonObject(Workbook workbook, JSONObject benefitResponse, String key, JsonProcessor processor, JSONObject jsonResponse) {
+    private static void processJsonObject(Workbook workbook, 
+    										JSONObject benefitResponse, 
+    										String key, 
+    										JsonProcessor processor, 
+    										JSONObject jsonResponse) {
         JSONArray jsonArray = benefitResponse.optJSONArray(key);
-//        if (jsonArray != null || jsonArray == null) {
-            processor.process(workbook, key, jsonArray, jsonResponse);
-//        }
+        if (jsonArray == null ) {
+        	// Convert a null JSON Array to an empty one
+        	jsonArray = new JSONArray();
+        }
+        processor.process(workbook, key, jsonArray, jsonResponse);
+      
     }
 
     private static boolean isDefinedObject(String key) {
         return 	"accumIclOopLst".equals(key) ||
-                "accumOverrideCopayLst".equals(key) || 
-                "acmltnHraIPLst".equals(key) ;
+                "accumOverrideCopayLst".equals(key);
     }
 
     private static void createSheet(Workbook workbook, String sheetName, JSONArray jsonArray) {
